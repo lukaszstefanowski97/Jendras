@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
+
 @RestController
 @CrossOrigin
 @RequestMapping("api")
@@ -22,7 +24,7 @@ public class EmailController {
     }
 
     @PostMapping("/beginDestruction")
-    public ResponseEntity<String> sendEmail(@RequestBody EmailData emailData) {
+    public ResponseEntity<String> sendEmail(@RequestBody EmailData emailData) throws MessagingException {
         if (emailData.getContent() == null || emailData.getSubject() == null) {
             return new ResponseEntity<>(Messages.INBALID_REQUEST, HttpStatus.BAD_REQUEST);
         } else
