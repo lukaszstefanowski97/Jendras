@@ -1,91 +1,84 @@
 package com.example.annihilator.services.impl;
 
 import com.example.annihilator.services.EmailService;
+import com.example.annihilator.utils.EnvConfig;
 import com.example.annihilator.utils.Messages;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
 
-import javax.mail.*;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import java.util.Date;
-import java.util.Properties;
+import javax.mail.MessagingException;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Data
 @Slf4j
-@ConfigurationProperties(prefix = "mail")
+@ConfigurationProperties(prefix = "spring.mail")
 public class EmailServiceImpl implements EmailService {
 
-    private String sender;
-    private String pass;
-    private String konrad1;
-    private String konrad2;
-    private String konrad3;
+    private String host;
+    private int port;
+    private String username;
+    private String password;
+    private String receiver1;
+    private String receiver2;
+    private String receiver3;
+    private String from;
+
+    @Value("${addresses.lukasz}")
+    private String lukasz;
+
+    @Value("${addresses.jendras}")
+    private String jendras;
+
 
     @Override
-    public String sendEmail(String subject, String content) throws MessagingException {
-//        Properties props = new Properties();
-//        props.put("mail.smtp.host", "smtp.gmail.com");
-//        props.put("mail.smtp.port", 587);
-//        props.put("mail.smtp.auth", "true");
-//        props.put("mail.smtp.starttls.enable", "true");
-//        props.put("mail.user", getSender());
-//        props.put("mail.password", getPass());
-//
-//        Session session = Session.getDefaultInstance(props, new Authenticator() {
-//
-//            @Override
-//            protected PasswordAuthentication getPasswordAuthentication() {
-//                return new PasswordAuthentication(getSender(), getPass());
-//            }
-//        });
-//
-//        try {
-//            Message msg = new MimeMessage(session);
-//            msg.setFrom(new InternetAddress(getSender()));
-//            msg.addRecipient(Message.RecipientType.TO, new InternetAddress(getKonrad1()));
-//            msg.addRecipient(Message.RecipientType.TO, new InternetAddress(getKonrad2()));
-//            msg.addRecipient(Message.RecipientType.TO, new InternetAddress(getKonrad3()));
-//            msg.setSubject(subject);
-//            msg.setText(content);
-//            Transport transport = session.getTransport("smtp");
-//            transport.connect("smtp.gmail.com", getSender(), getPass());
-//            transport.sendMessage(msg, msg.getAllRecipients());
-//            transport.close();
-//            log.info(Messages.EMAIL_SUCCEDED);
-//            return Messages.EMAIL_SUCCEDED;
-//        } catch (AddressException e) {
-//            log.error(e.getMessage());
-//            return e.getMessage();
-//        } catch (MessagingException e) {
-//            return e.getMessage();
-//        }
-        InternetAddress[] distributionList = InternetAddress.parse("lukasz.stefanowski97@gmail.com,olakadz@gmail.com" +
-                ".com",false);
-        String from = "javahonk@gmail.com";
+    public void beginDestruction(String subject, String content) throws MessagingException, IOException, InterruptedException {
+        sendEmail(subject, content, getReceiver1());
+        TimeUnit.SECONDS.sleep(5);
+        sendEmail(subject, content, getReceiver2());
+        TimeUnit.SECONDS.sleep(5);
+        sendEmail(subject, content, getReceiver3());
+    }
 
-        Properties props = new Properties();
-        props.put("mail.smtp.host", "localhost");
-        props.put("mail.smtp.port", "25");
-        Session session = Session.getDefaultInstance(props, null);
-        session.setDebug(false);
+    void sendEmail(String subject, String content, String receiver) {
+        JavaMailSenderImpl mailSender = createMailSender();
 
-        Message msg = new MimeMessage(session);
-        msg.setContent(content, "text/html; charset=utf-8");
-        msg.setFrom(new InternetAddress(from));
-        msg.setRecipients(Message.RecipientType.TO, distributionList);
-        msg.setSubject(subject);
-        msg.setSentDate(new Date());
-        Transport.send(msg);
-        return Messages.EMAIL_SUCCEDED;
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setFrom(from);
+        mailMessage.setTo(receiver);
+        mailMessage.setSubject(subject);
+        mailMessage.setText(content);
+
+        mailSender.send(mailMessage);
+    }
+
+    private JavaMailSenderImpl createMailSender() {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(host);
+        mailSender.setPort(port);
+        mailSender.setUsername(username);
+        mailSender.setPassword(password);
+
+        return mailSender;
     }
 
     @Override
-    public String checkIp() {
-        return null;
+    public void notifyAboutIpChange(String currentIp) {
+
+        JavaMailSenderImpl mailSender = createMailSender();
+
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setFrom(from);
+        mailMessage.setTo(lukasz, jendras);
+        mailMessage.setSubject(Messages.IP_CHANGED_SUBJECT);
+        mailMessage.setText(Messages.IP_CHANGED_MESSAGE + currentIp);
+
+        mailSender.send(mailMessage);
     }
 }

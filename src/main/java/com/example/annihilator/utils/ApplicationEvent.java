@@ -1,6 +1,7 @@
 package com.example.annihilator.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.Environment;
@@ -14,11 +15,10 @@ import java.net.UnknownHostException;
 public class ApplicationEvent implements ApplicationListener<ApplicationReadyEvent> {
 
     private final Environment environment;
-    private String ip;
 
     {
         try {
-            ip = InetAddress.getLocalHost().getHostAddress();
+            EnvConfig.ip = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
@@ -30,11 +30,11 @@ public class ApplicationEvent implements ApplicationListener<ApplicationReadyEve
 
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info(Messages.APP_RUNNING);
-        if (ip == null) {
+        if (EnvConfig.ip == null) {
             log.error(Messages.IP_ERROR);
         } else {
-            log.info(Messages.LISTENING + ip + ":" + environment.getProperty("local.server.port") + "/api/test");
-            log.info(Messages.SEND_EMAIL + ip + ":" + environment.getProperty("local.server.port") + "/api" +
+            log.info(Messages.LISTENING + EnvConfig.ip + ":" + environment.getProperty("local.server.port") + "/api/test");
+            log.info(Messages.SEND_EMAIL + EnvConfig.ip + ":" + environment.getProperty("local.server.port") + "/api" +
                     "/beginDestruction");
         }
     }

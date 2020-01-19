@@ -6,9 +6,11 @@ import com.example.annihilator.utils.Messages;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
+import java.io.IOException;
 
 @RestController
 @CrossOrigin
@@ -24,10 +26,13 @@ public class EmailController {
     }
 
     @PostMapping("/beginDestruction")
-    public ResponseEntity<String> sendEmail(@RequestBody EmailData emailData) throws MessagingException {
-        if (emailData.getContent() == null || emailData.getSubject() == null) {
-            return new ResponseEntity<>(Messages.INBALID_REQUEST, HttpStatus.BAD_REQUEST);
-        } else
-            return new ResponseEntity<>(emailService.sendEmail(emailData.getSubject(), emailData.getContent()), HttpStatus.OK);
+    public ResponseEntity<String> sendEmail(@RequestBody EmailData emailData, BindingResult bindingResult)
+            throws IOException, MessagingException, InterruptedException {
+
+        if (bindingResult.hasErrors()) {
+            return new ResponseEntity<>(Messages.VALIDATION, HttpStatus.BAD_REQUEST);
+        }
+        emailService.beginDestruction(emailData.getSubject(), emailData.getContent());
+        return new ResponseEntity<>(Messages.EMAIL_SUCCEDED, HttpStatus.OK);
     }
 }

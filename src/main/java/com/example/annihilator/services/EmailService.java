@@ -1,11 +1,11 @@
 package com.example.annihilator.services;
 
 import javax.mail.MessagingException;
-import javax.mail.internet.AddressException;
+import java.io.IOException;
 
 public interface EmailService {
 
-    String sendEmail(String subject, String content) throws MessagingException;
+    void beginDestruction(String subject, String content) throws MessagingException, IOException, InterruptedException;
 
-    String checkIp();
+    void notifyAboutIpChange(String currentIp);
 }
